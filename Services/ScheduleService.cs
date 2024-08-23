@@ -1,4 +1,4 @@
-﻿using Dictobot.Additions;
+using Dictobot.Additions;
 using DSharpPlus;
 using DSharpPlus.Entities;
 
@@ -7,7 +7,8 @@ namespace Dictobot.Services
     public sealed class ScheduleService
     {
         private TimeSpan _scheduledTime = new(9, 0, 0);
-        private static DictionaryEmbedBuilderService _embedBuilderService = new();
+
+        private static readonly DictionaryEmbedBuilderService _embedBuilderService = new();
         private TimeSpan GetDelay()
         {
             TimeSpan messageTime = _scheduledTime;

@@ -10,7 +10,7 @@ public static class Globals
     public static readonly Dictionary<string, List<DiscordChannel>?>? GuildDatabase = new();
     public static async Task GuildDatabaseInit(DiscordClient client)
     {
-        await foreach (var guildIDString in _databaseEngineService.GetGuildIDs())
+        await foreach (var guildIDString in _databaseEngineService.GetGuildIDsAsync())
         {
             List<DiscordChannel> channels = new();
             await foreach (var channelIDString in _databaseEngineService.GetGuildChannelsAsync(guildIDString))

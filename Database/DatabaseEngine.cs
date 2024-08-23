@@ -1,10 +1,11 @@
-﻿using Dictobot.Configuration;
+using Dictobot.Configuration;
 using Npgsql;
 namespace Dictobot.Database;
 public class DatabaseEngine
 {
-    private string _tableNameAbsolute;
-    private string _connectionString;
+    private string? _tableNameAbsolute;
+
+    private string? _connectionString;
     public DatabaseEngine() 
     {
         DatabaseSettingsStructure.InitializeAsync().GetAwaiter().GetResult();
@@ -13,7 +14,7 @@ public class DatabaseEngine
 
         _tableNameAbsolute = $"{JSONReader<DatabaseSettingsStructure>.Data?.DatabaseName}.{JSONReader<DatabaseSettingsStructure>.Data?.SchemaName}.{JSONReader<DatabaseSettingsStructure>.Data?.TableName}";
     }
-    private async Task<long> GetTotalGuildAysnc()
+    private async Task<long> GetTotalGuildAsync()
     {
         using (var conn = new NpgsqlConnection(_connectionString))
         {
@@ -28,7 +29,7 @@ public class DatabaseEngine
             }
         }
     }
-    private async Task<bool> GuildExists(string serverID)
+    private async Task<bool> GuildExistsAsync(string serverID)
     {
         using (var conn = new NpgsqlConnection(_connectionString))
         {
@@ -43,12 +44,12 @@ public class DatabaseEngine
             }
         }
     }
-    private async Task<int> StoreGuildAsync(DGuild guild)
+    private async Task<bool> StoreGuildAsync(DGuild guild)
     {
-        long guild_no = await GetTotalGuildAysnc() + 1;
+        long guild_no = await GetTotalGuildAsync() + 1;
 
         if (guild_no == -1)
-            return -1;
+            return false;
 
         using (var conn = new NpgsqlConnection(_connectionString))
         {
@@ -58,12 +59,12 @@ public class DatabaseEngine
 
             using (var cmd = new NpgsqlCommand(query, conn))
             {
-                int code = await cmd.ExecuteNonQueryAsync();
-                return code;
+                await cmd.ExecuteNonQueryAsync();
+                return true;
             }
         }
     }
-    public async Task<bool> ChannelExists(string guildID, string channelID)
+    public async Task<bool> ChannelExistsAsync(string guildID, string channelID)
     {
         using (var conn = new NpgsqlConnection(_connectionString))
         {
@@ -78,85 +79,45 @@ public class DatabaseEngine
             }
         }
     }
-    public async Task<int> RegisterGuildChannelsAsync(DGuild guild, string channelID)
+    public async Task<bool> RegisterGuildChannelsAsync(DGuild guild, string channelID)
     {
-        try
+        using (var conn = new NpgsqlConnection(_connectionString))
         {
-            using (var conn = new NpgsqlConnection(_connectionString))
+            await conn.OpenAsync();
+
+            if (!await GuildExistsAsync(guild.GuildID!))
             {
-                await conn.OpenAsync();
-
-                if (!await GuildExists(guild.GuildID!))
-                {
-                    await StoreGuildAsync(guild);
-                    Console.WriteLine($"Created a guild with ID: {guild.GuildID!}");
-                }
-
-                Console.WriteLine($"Updating guild ID: {guild.GuildID!}");
-                string query = $"UPDATE {_tableNameAbsolute} SET channels=ARRAY_APPEND(channels, \'{channelID}\') WHERE guild_id=\'{guild.GuildID!}\'";
-
-                using (var cmd = new NpgsqlCommand(query, conn))
-                {
-                    int rowsAffected = await cmd.ExecuteNonQueryAsync();
-
-                    if (rowsAffected > 0)
-                    {
-                        Console.WriteLine("Update successful.");
-                        return 1; // Success
-                    }
-                    else
-                    {
-                        Console.WriteLine("No rows updated. Possible data mismatch.");
-                        return 0; // No rows updated
-                    }
-                }
+                await StoreGuildAsync(guild);
+                Console.WriteLine($"Created a guild with ID: {guild.GuildID!}");
             }
-        }
 
-        catch (Exception ex)
-        {
-            // Log the exception details for debugging
-            Console.WriteLine($"Database update error: {ex.Message}");
-            return -1; // Indicate an error occurred
+            string query = $"UPDATE {_tableNameAbsolute} SET channels=ARRAY_APPEND(channels, \'{channelID}\') WHERE guild_id=\'{guild.GuildID!}\'";
+
+            using (var cmd = new NpgsqlCommand(query, conn))
+            {
+				if (await cmd.ExecuteNonQueryAsync() <= 0)
+					return false;
+			}
         }
+		return true;
     }
-    public async Task<int> DeregisterGuildChannelsAsync(DGuild guild, string channelID)
+    public async Task<bool> DeregisterGuildChannelsAsync(DGuild guild, string channelID)
     {
-        try
+        using (var conn = new NpgsqlConnection(_connectionString))
         {
-            using (var conn = new NpgsqlConnection(_connectionString))
+            await conn.OpenAsync();
+
+            string query = $"UPDATE {_tableNameAbsolute} SET channels=ARRAY_REMOVE(channels, \'{channelID}\') WHERE guild_id=\'{guild.GuildID}\' AND channels IS NOT NULL";
+
+            using (var cmd = new NpgsqlCommand(query, conn))
             {
-                await conn.OpenAsync();
-
-                Console.WriteLine($"Updating guild ID: {guild.GuildID!}");
-                string query = $"UPDATE {_tableNameAbsolute} SET channels=ARRAY_REMOVE(channels, \'{channelID}\') WHERE guild_id=\'{guild.GuildID}\' AND channels IS NOT NULL";
-
-                using (var cmd = new NpgsqlCommand(query, conn))
-                {
-                    int rowsAffected = await cmd.ExecuteNonQueryAsync();
-
-                    if (rowsAffected > 0)
-                    {
-                        Console.WriteLine("Update successful.");
-                        return 1; // Success
-                    }
-                    else
-                    {
-                        Console.WriteLine("No rows updated. Possible data mismatch.");
-                        return 0; // No rows updated
-                    }
-                }
-            }
+				if (await cmd.ExecuteNonQueryAsync() <= 0)
+					return false;
+			}
         }
-
-        catch (Exception ex)
-        {
-            // Log the exception details for debugging
-            Console.WriteLine($"Database update error: {ex.Message}");
-            return -1; // Indicate an error occurred
-        }
+		return true;
     }
-    public async IAsyncEnumerable<string> GetGuildIDs()
+    public async IAsyncEnumerable<string> GetGuildIDsAsync()
     {
         using (var conn = new NpgsqlConnection(_connectionString))
         {
@@ -169,12 +130,14 @@ public class DatabaseEngine
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     if (reader.HasRows)
-                        while (await reader.ReadAsync())
-                        {
-                            var guildID = reader.GetString(0);
-                            if (!string.IsNullOrEmpty(guildID))
-                                yield return guildID;
-                        }
+					{
+						while (await reader.ReadAsync())
+						{
+							var guildID = reader.GetString(0);
+							if (!string.IsNullOrEmpty(guildID))
+								yield return guildID;
+						}
+					}
                 }
             }
         }
@@ -193,11 +156,13 @@ public class DatabaseEngine
                 {
                     while (await reader.ReadAsync())
                     {
-                        var channelIDs = reader.IsDBNull(0) ? null : reader.GetFieldValue<string[]>(0);
-                        if (channelIDs != null)
-                            foreach (var channelID in channelIDs)
-                                if (!string.IsNullOrEmpty(channelID))
-                                    yield return channelID;
+						if (reader.IsDBNull(0))
+							yield return null;
+
+                        var channelIDs = reader.GetFieldValue<List<string>>(0);
+                        foreach (var channelID in channelIDs)
+                            if (!string.IsNullOrEmpty(channelID))
+                                yield return channelID;
                     }
                 }
             }

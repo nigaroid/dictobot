@@ -1,16 +1,17 @@
-﻿using DSharpPlus.Entities;
+using DSharpPlus.Entities;
 
 namespace Dictobot.Services;
 public sealed class DictionaryEmbedBuilderService
 {
-    private static DictionaryService _dictionaryService = new();
+    private static DictionaryService? _dictionaryService;
     public async Task<DiscordEmbedBuilder> GetEmbedBuilder()
     {
-        return await _dictionaryService.GetEmbedBuilder();
+		_dictionaryService = new();
+        return await _dictionaryService.GetEmbedBuilderAsync();
     }
     public async Task<DiscordEmbedBuilder> GetEmbedBuilder(string date)
     {
         _dictionaryService = new(date);
-        return await _dictionaryService.GetEmbedBuilder();
+        return await _dictionaryService.GetEmbedBuilderAsync();
     }
 }

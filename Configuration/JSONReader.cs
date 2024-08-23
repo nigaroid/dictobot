@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 
 namespace Dictobot.Configuration
 {
@@ -9,7 +9,7 @@ namespace Dictobot.Configuration
         {
             using (StreamReader sr = new StreamReader(fileName))
             {
-                string json = await sr.ReadToEndAsync();
+                var json = await sr.ReadToEndAsync();
                 Data = JsonConvert.DeserializeObject<T>(json);
             }
         }
