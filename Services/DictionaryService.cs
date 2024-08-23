@@ -1,0 +1,64 @@
+﻿using System.Text.RegularExpressions;
+using DSharpPlus.Entities;
+using HtmlAgilityPack;
+
+namespace Dictobot.Services
+{
+    public sealed class DictionaryService
+    {
+        private string _date = string.Empty;
+
+        private string _url = "https://www.merriam-webster.com/word-of-the-day";
+
+        private readonly HttpClient _httpClient = new();
+        public DictionaryService(string date)
+        {
+            _date = date;
+            _url = $"{_url}/{_date}";
+        }
+        public DictionaryService() { }
+        private async Task<HtmlDocument> GetResponseHtml()
+        {
+            HttpResponseMessage response = await _httpClient.GetAsync(_url);
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+
+            HtmlDocument document = new();
+            document.LoadHtml(responseBody);
+            return document;
+        }
+        public async Task<DiscordEmbedBuilder> GetEmbedBuilder()
+        {
+            var objects = new List<string>();
+            await foreach (var @object in GetObjects())
+                objects.Add(@object);
+
+            return new DiscordEmbedBuilder()
+                .WithColor(DiscordColor.Blurple)
+                .WithTitle($"{objects[0]}\t[{objects[2]}]\t({objects[1]})\n\nWhat It Means?\n\n")
+                .WithDescription($"{objects[3]}\n\n")
+                .WithFooter($"{objects[4]}");
+        }
+        public async IAsyncEnumerable<string> GetObjects()
+        {
+            HtmlDocument document = await GetResponseHtml();
+
+            const string taboo = "See the entry";
+
+            var wotd = document.DocumentNode.SelectSingleNode("//div[contains(@class, 'word-and-pronunciation')]/h2");
+            var description = document.DocumentNode.SelectNodes("//div[contains(@class, 'wod-definition-container')]/p");
+            var attributes = document.DocumentNode.SelectNodes("//div[contains(@class, 'word-attributes')]");
+            var dateInfo = document.DocumentNode.SelectNodes("//div[contains(@class, 'w-a-title')]")[0];
+
+            if (wotd != null && description != null && attributes != null && dateInfo != null)
+                foreach (var attribute in attributes)
+                {
+                    yield return wotd?.InnerText.Trim().ToString().ToUpper()[0] + wotd!.InnerText.Trim().Substring(1);
+                    yield return Regex.Replace(attribute.InnerText, @"\s+", " ").Trim().Split().ToList()[0].ToString();
+                    yield return Regex.Replace(attribute.InnerText, @"\s+", " ").Trim().Split().ToList()[1].ToString();
+                    yield return string.Join("\n\n", description.Select(x => x.InnerText.Trim()).Where(x => !x.Contains(taboo))).ToString();
+                    yield return Regex.Replace(dateInfo.InnerText.Split('\n')[2].ToString(), @"\s+", " ").Trim().Split(':')[1].ToString();
+                }
+        }
+    }
+}
