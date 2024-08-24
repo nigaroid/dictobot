@@ -8,8 +8,10 @@ namespace Dictobot.Services
     public sealed class SlashCommandsService : ApplicationCommandModule
     {
         private static readonly DictionaryEmbedBuilderService _embedBuilderService = new();
+
         private static readonly DictionaryService _dictionaryService = new();
-        private static readonly DatabaseEngine _databaseEngine = new();
+
+		private static readonly DatabaseEngine _databaseEngine = new();
 
         [SlashCommand("wotd", "Send the word of the day.")]
         public async Task SendWOTD(InteractionContext ctx)
@@ -36,8 +38,8 @@ namespace Dictobot.Services
             }
         }
 
-        [SlashCommand("register", "Input a channel ID you want to register the bot into.")]
-        public async Task RegisterChannel(InteractionContext ctx, [Option("channel", "channel ID within the server")] DiscordChannel channel)
+        [SlashCommand("register", "Register a channel within the server to recieve a daily message")]
+        public async Task RegisterChannel(InteractionContext ctx, [Option("channel", "channel tag (can't be a category)")] DiscordChannel channel)
         {
             await ctx.DeferAsync();
 

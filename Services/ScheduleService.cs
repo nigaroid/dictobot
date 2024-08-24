@@ -6,7 +6,7 @@ namespace Dictobot.Services
 {
     public sealed class ScheduleService
     {
-        private TimeSpan _scheduledTime = new(9, 0, 0);
+        private static TimeSpan _scheduledTime = new(9, 0, 0);
 
         private static readonly DictionaryEmbedBuilderService _embedBuilderService = new();
         private TimeSpan GetDelay()
