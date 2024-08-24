@@ -10,7 +10,9 @@ namespace Dictobot
     public class Bot
     {
         private static DiscordClient? _client;
+
         private static SlashCommandsService _commandService = new();
+
         private static ScheduleService _scheduleService = new();
         private static async Task BotInit()
         {

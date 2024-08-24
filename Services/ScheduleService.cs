@@ -7,8 +7,6 @@ namespace Dictobot.Services
     public sealed class ScheduleService
     {
         private static TimeSpan _scheduledTime = new(9, 0, 0);
-
-        private static readonly DictionaryEmbedBuilderService _embedBuilderService = new();
         private TimeSpan GetDelay()
         {
             TimeSpan messageTime = _scheduledTime;
@@ -30,7 +28,7 @@ namespace Dictobot.Services
 
 			return totalChannels.FirstOrDefault(x => x != null && !x.IsCategory);
 		}
-		private async Task SendMessageToChannels(DiscordClient client, DiscordEmbed embed)
+		private async Task SendMessageToChannels(DiscordClient client, DiscordWebhookBuilder webhookBuilder)
 		{
 			foreach (var (guildIDString, channels) in Globals.GuildDatabase!)
 			{
@@ -39,18 +37,18 @@ namespace Dictobot.Services
 					var defaultChannel = await GetDefaultChannel(guildIDString, client);
 
 					if (defaultChannel != null)
-						await defaultChannel.SendMessageAsync(embed);
+						await defaultChannel.SendMessageAsync(webhookBuilder.Embeds[0]);
 				}
 				else
 				{
 					foreach (var channel in channels!)
-						await channel.SendMessageAsync(embed);
+						await channel.SendMessageAsync(webhookBuilder.Embeds[0]);
 				}
 			}
 		}
 		public async Task SendEmbedMessageAsync(DiscordClient client)
         {
-            var embed = await _embedBuilderService.GetEmbedBuilder();
+            var webhookBuilder = await Webhooks.WebhookBuilder.GetDictionaryWebhookBuilderAsync();
 
             while (true)
             {
@@ -60,7 +58,7 @@ namespace Dictobot.Services
                 if (!Globals.GuildDatabase!.Any())
                     return;
 
-				await SendMessageToChannels(client, embed);
+				await SendMessageToChannels(client, webhookBuilder);
 			}
         }
     }

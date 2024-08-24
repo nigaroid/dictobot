@@ -4,23 +4,26 @@ using HtmlAgilityPack;
 
 namespace Dictobot.Services
 {
-    public sealed class DictionaryService
-    {
-        private string _date = $"{DateTime.UtcNow.Year.ToString("00")}-{DateTime.UtcNow.Month.ToString("00")}-{DateTime.UtcNow.Day.ToString("00")}";
+	public sealed class DictionaryService
+	{
+        private readonly HttpClient _httpClient = new();
+		private string URL => "https://www.merriam-webster.com/word-of-the-day";
 
-        private string _url = "https://www.merriam-webster.com/word-of-the-day";
-
-        private static readonly HttpClient _httpClient = new();
+		private string? URLAbsolute;
 		private bool IsDictionaryObject(string input) => !input.Contains("See the entry");
-		public DictionaryService() { }
+		public DictionaryService()
+		{
+			URLAbsolute = $"{URL}/{$"{DateTime.UtcNow.Year.ToString("00")}-" +
+						  $"{DateTime.UtcNow.Month.ToString("00")}-" +
+						  $"{DateTime.UtcNow.Day.ToString("00")}"}";
+		}
         public DictionaryService(string date)
         {
-            _date = date;
-            _url = $"{_url}/{_date}";
+			URLAbsolute = $"{URL}/{date}";
         }
         private async Task<HtmlDocument> GetResponseHtml()
         {
-            HttpResponseMessage response = await _httpClient.GetAsync(_url);
+            HttpResponseMessage response = await _httpClient.GetAsync(URLAbsolute);
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
 
@@ -28,17 +31,17 @@ namespace Dictobot.Services
             document.LoadHtml(responseBody);
             return document;
         }
-        public async Task<DiscordEmbedBuilder> GetEmbedBuilderAsync()
+        public async Task<DiscordWebhookBuilder> GetWebhookBuilderAsync()
         {
             var objects = new List<string>();
             await foreach (var @object in GetObjectsAsync())
                 objects.Add(@object);
 
-            return new DiscordEmbedBuilder()
+            return new DiscordWebhookBuilder().AddEmbed(new DiscordEmbedBuilder()
                 .WithColor(DiscordColor.Blurple)
                 .WithTitle($"{objects[0]}\t[{objects[2]}]\t({objects[1]})\n\nWhat It Means?\n\n")
                 .WithDescription($"{objects[3]}\n\n")
-                .WithFooter($"{objects[4]}");
+                .WithFooter($"{objects[4]}"));
         }
         public async IAsyncEnumerable<string> GetObjectsAsync()
         {

@@ -7,8 +7,6 @@ namespace Dictobot.Services
 {
     public sealed class SlashCommandsService : ApplicationCommandModule
     {
-        private static readonly DictionaryEmbedBuilderService _embedBuilderService = new();
-
         private static readonly DictionaryService _dictionaryService = new();
 
 		private static readonly DatabaseEngine _databaseEngine = new();
@@ -17,8 +15,8 @@ namespace Dictobot.Services
         public async Task SendWOTD(InteractionContext ctx)
         {
             await ctx.DeferAsync();
-            var embedBuilder = await _embedBuilderService!.GetEmbedBuilder();
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embedBuilder));
+            var embedBuilder = await Webhooks.WebhookBuilder.GetDictionaryWebhookBuilderAsync();
+            await ctx.EditResponseAsync(embedBuilder);
         }
 
         [SlashCommand("wotdof", "Send the word of the day.")]
@@ -28,13 +26,12 @@ namespace Dictobot.Services
 
             if (DateValidationService.ValidateDate(date))
             {
-                var embedBuilder = _embedBuilderService!.GetEmbedBuilder(date);
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embedBuilder.Result));
+                var embedBuilder = await Webhooks.WebhookBuilder.GetDictionaryWebhookBuilderAsync(date);
+                await ctx.EditResponseAsync(embedBuilder);
             }
             else
             {
-                var errorMessage = "Invalid date or format, please try again.\n\n" + $"Date should be within {DateTime.UtcNow.Date.Year}, and in the format YYYY-MM-DD";
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(new DiscordEmbedBuilder().WithColor(DiscordColor.Red).WithDescription(errorMessage)));
+                await ctx.EditResponseAsync(Webhooks.WebhookBuilder.InvalidDateOrFormat());
             }
         }
 
@@ -45,11 +42,7 @@ namespace Dictobot.Services
 
             if (channel.IsCategory)
             {
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder()
-                    .AddEmbed(new DiscordEmbedBuilder()
-                    .WithColor(DiscordColor.Red)
-                    .WithTitle("Error")
-                    .WithDescription("Categories cannot be registered. Please try again.")));
+                await ctx.EditResponseAsync(Webhooks.WebhookBuilder.RegisterCategoryFailure());
                 return;
             }
 
@@ -62,26 +55,16 @@ namespace Dictobot.Services
             string channelID = channel.Id.ToString();
             if (await _databaseEngine.ChannelExistsAsync(guild, channelID))
             {
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder()
-                    .AddEmbed(new DiscordEmbedBuilder()
-                    .WithColor(DiscordColor.Yellow)
-                    .WithDescription($"Channel {channel.Mention} is already registered.")));
+                await ctx.EditResponseAsync(Webhooks.WebhookBuilder.RegisterChannelExistsFailure(channel));
                 return;
             }
 
             if (!await _databaseEngine.RegisterGuildChannelsAsync(guild, channelID))
             {
-				await ctx.EditResponseAsync(new DiscordWebhookBuilder()
-					.AddEmbed(new DiscordEmbedBuilder()
-					.WithColor(DiscordColor.Red)
-					.WithTitle("Error")
-					.WithDescription("No channels were updated. This may indicate an issue with the database.")));
+				await ctx.EditResponseAsync(Webhooks.WebhookBuilder.DatabaseFailure());
 				return;
 			}
-			await ctx.EditResponseAsync(new DiscordWebhookBuilder()
-					.AddEmbed(new DiscordEmbedBuilder()
-					.WithColor(DiscordColor.Green)
-					.WithDescription($"Channel {channel.Mention} added successfully.")));
+			await ctx.EditResponseAsync(Webhooks.WebhookBuilder.RegisterSuccess(channel));
         }
 
         [SlashCommand("deregister", "Input a channel ID you want to deregister the bot into.")]
@@ -99,26 +82,16 @@ namespace Dictobot.Services
 
             if (!await _databaseEngine.ChannelExistsAsync(guild, channelID))
             {
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder()
-                    .AddEmbed(new DiscordEmbedBuilder()
-                    .WithColor(DiscordColor.Yellow)
-                    .WithDescription($"Channel {channel.Mention} is not registered.")));
+                await ctx.EditResponseAsync(Webhooks.WebhookBuilder.DeregisterChannelNotExistsFailure(channel));
                 return;
             }
 
 			if (!await _databaseEngine.DeregisterGuildChannelsAsync(guild, channelID))
 			{
-				await ctx.EditResponseAsync(new DiscordWebhookBuilder()
-					.AddEmbed(new DiscordEmbedBuilder()
-					.WithColor(DiscordColor.Red)
-					.WithTitle("Error")
-					.WithDescription("No channels were updated. This may indicate an issue with the database.")));
+				await ctx.EditResponseAsync(Webhooks.WebhookBuilder.DatabaseFailure());
 				return;
 			}
-			await ctx.EditResponseAsync(new DiscordWebhookBuilder()
-					.AddEmbed(new DiscordEmbedBuilder()
-					.WithColor(DiscordColor.Green)
-					.WithDescription($"Channel {channel.Mention} deleted successfully.")));
+			await ctx.EditResponseAsync(Webhooks.WebhookBuilder.DeregisterSuccess(channel));
         }
 
         /*[SlashCommand("setschedule", "Set a new schedule time.")]
