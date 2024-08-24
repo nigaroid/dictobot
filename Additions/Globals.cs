@@ -1,4 +1,4 @@
-﻿using Dictobot.Database;
+using Dictobot.Database;
 using DSharpPlus;
 using DSharpPlus.Entities;
 
@@ -8,13 +8,15 @@ public static class Globals
     private static readonly DatabaseEngine _databaseEngineService = new();
 
     public static readonly Dictionary<string, List<DiscordChannel>?>? GuildDatabase = new();
-    public static async Task GuildDatabaseInit(DiscordClient client)
+    public static async Task GuildDatabaseInitAsync(DiscordClient client)
     {
         await foreach (var guildIDString in _databaseEngineService.GetGuildIDsAsync())
         {
             List<DiscordChannel> channels = new();
-            await foreach (var channelIDString in _databaseEngineService.GetGuildChannelsAsync(guildIDString))
-            {
+
+			var channelIDs = await _databaseEngineService.GetGuildChannelIDsAsync(guildIDString);
+
+			foreach (var channelIDString in channelIDs!)
                 if (!string.IsNullOrEmpty(channelIDString))
                 {
                     if (!ulong.TryParse(guildIDString, out ulong guildID) ||
@@ -29,7 +31,6 @@ public static class Globals
 
                     channels.Add(channel);
                 }
-            }
             GuildDatabase!.Add(guildIDString, channels.Any() ? channels : null);
         }
     }

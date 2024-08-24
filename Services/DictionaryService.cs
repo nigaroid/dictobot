@@ -18,7 +18,7 @@ namespace Dictobot.Services
             _date = date;
             _url = $"{_url}/{_date}";
         }
-        private async Task<HtmlDocument> GetResponseHtmlAsync()
+        private async Task<HtmlDocument> GetResponseHtml()
         {
             HttpResponseMessage response = await _httpClient.GetAsync(_url);
             response.EnsureSuccessStatusCode();
@@ -42,7 +42,7 @@ namespace Dictobot.Services
         }
         public async IAsyncEnumerable<string> GetObjectsAsync()
         {
-            HtmlDocument document = await GetResponseHtmlAsync();
+            HtmlDocument document = await GetResponseHtml();
 
             var wotd = document.DocumentNode.SelectSingleNode("//div[contains(@class, 'word-and-pronunciation')]/h2");
             var description = document.DocumentNode.SelectNodes("//div[contains(@class, 'wod-definition-container')]/p");

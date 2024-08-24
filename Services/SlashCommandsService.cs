@@ -60,7 +60,7 @@ namespace Dictobot.Services
             };
 
             string channelID = channel.Id.ToString();
-            if (await _databaseEngine.ChannelExistsAsync(guild.GuildID, channelID))
+            if (await _databaseEngine.ChannelExistsAsync(guild, channelID))
             {
                 await ctx.EditResponseAsync(new DiscordWebhookBuilder()
                     .AddEmbed(new DiscordEmbedBuilder()
@@ -92,12 +92,12 @@ namespace Dictobot.Services
             var guild = new DGuild
             {
                 GuildID = ctx.Guild.Id.ToString(),
-                ServerName = ctx.Guild.Name
+                ServerName = ctx.Guild.Name,
             };
 
             string channelID = channel.Id.ToString();
 
-            if (!await _databaseEngine.ChannelExistsAsync(guild.GuildID, channelID))
+            if (!await _databaseEngine.ChannelExistsAsync(guild, channelID))
             {
                 await ctx.EditResponseAsync(new DiscordWebhookBuilder()
                     .AddEmbed(new DiscordEmbedBuilder()

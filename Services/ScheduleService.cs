@@ -17,7 +17,7 @@ namespace Dictobot.Services
             return messageTime > currentTime ? messageTime - currentTime
                                              : new TimeSpan(1, 0, 0, 0) - currentTime + messageTime;
         }
-		private async Task<DiscordChannel?> GetDefaultChannelAsync(string guildIDString, DiscordClient client)
+		private async Task<DiscordChannel?> GetDefaultChannel(string guildIDString, DiscordClient client)
 		{
 			if (!ulong.TryParse(guildIDString, out ulong guildID))
 				return null;
@@ -36,7 +36,7 @@ namespace Dictobot.Services
 			{
 				if (channels == null)
 				{
-					var defaultChannel = await GetDefaultChannelAsync(guildIDString, client);
+					var defaultChannel = await GetDefaultChannel(guildIDString, client);
 
 					if (defaultChannel != null)
 						await defaultChannel.SendMessageAsync(embed);
@@ -48,7 +48,7 @@ namespace Dictobot.Services
 				}
 			}
 		}
-		public async Task SendEmbedMessage(DiscordClient client)
+		public async Task SendEmbedMessageAsync(DiscordClient client)
         {
             var embed = await _embedBuilderService.GetEmbedBuilder();
 

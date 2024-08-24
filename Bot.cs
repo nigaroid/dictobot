@@ -1,4 +1,4 @@
-﻿using DSharpPlus;
+using DSharpPlus;
 using DSharpPlus.EventArgs;
 using DSharpPlus.SlashCommands;
 using Dictobot.Additions;
@@ -33,7 +33,7 @@ namespace Dictobot
 
             await _client!.ConnectAsync();
 
-            await Globals.GuildDatabaseInit(_client!);
+            await Globals.GuildDatabaseInitAsync(_client!);
             await ScheduleServiceInit();
         }
         private static Task OnClientReady(DiscordClient sender, ReadyEventArgs args) => Task.CompletedTask;
@@ -45,7 +45,7 @@ namespace Dictobot
         }
         private static async Task ScheduleServiceInit()
         {
-            await _scheduleService.SendEmbedMessage(_client!);
+            await _scheduleService.SendEmbedMessageAsync(_client!);
         }
         private static async Task BotRun()
         {
