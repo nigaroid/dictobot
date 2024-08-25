@@ -7,23 +7,23 @@ public static class WebhookBuilder
 	private static DictionaryService? _dictionaryService;
 
 	private static DiscordColor[] Colors = [DiscordColor.Green, DiscordColor.Yellow, DiscordColor.Red];
-	private enum Status
+	private static class Status
 	{
-		Success,
-		Warning,
-		Error
+		public const int Success = 0;
+		public const int Warning = 1;
+		public const int Error   = 2;
 	}
 	public static DiscordWebhookBuilder RegisterCategoryFailure() => new DiscordWebhookBuilder()
 					.AddEmbed(new DiscordEmbedBuilder()
-					.WithColor(Colors[(int)Status.Error])
+					.WithColor(Colors[Status.Error])
 					.WithDescription("Categories cannot be registered. Please try again."));
 	public static DiscordWebhookBuilder RegisterChannelExistsFailure(DiscordChannel channel) => new DiscordWebhookBuilder()
 					.AddEmbed(new DiscordEmbedBuilder()
-					.WithColor(Colors[(int)Status.Warning])
+					.WithColor(Colors[Status.Warning])
 					.WithDescription($"Channel {channel.Mention} is already registered."));
 	public static DiscordWebhookBuilder DatabaseFailure() => new DiscordWebhookBuilder()
 					.AddEmbed(new DiscordEmbedBuilder()
-					.WithColor(Colors[(int)Status.Error])
+					.WithColor(Colors[Status.Error])
 					.WithDescription("No channels were updated. This may indicate an issue with the database."));
 	public static DiscordWebhookBuilder RegisterSuccess(DiscordChannel channel) => new DiscordWebhookBuilder()
 					.AddEmbed(new DiscordEmbedBuilder()
