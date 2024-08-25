@@ -94,10 +94,31 @@ namespace Dictobot.Services
 			await ctx.EditResponseAsync(Webhooks.WebhookBuilder.DeregisterSuccess(channel));
         }
 
-        /*[SlashCommand("setschedule", "Set a new schedule time.")]
-        public async Task SetScheduleCommand(InteractionContext ctx, [Option("time", "New scheduled time in HH:MM format")] string time)
-        {
-            // undone
-        }*/
-    }
+		/*[SlashCommand("setschedule", "Set a new schedule time.")]
+		public async Task SetScheduleCommand(InteractionContext ctx, [Option("time", "New scheduled time in HH:mm format")] string time)
+		{
+			await ctx.DeferAsync();
+
+			if (TimeSpan.TryParse(time, out TimeSpan newTime))
+			{
+				await _databaseEngine.UpdateScheduledTimeAsync(ctx.Guild.Id.ToString(), newTime); // Store the new time in the database
+				_scheduleService.UpdateScheduledTime(newTime); // Update the running schedule service
+				await ctx.EditResponseAsync(new DiscordEmbedBuilder
+				{
+					Title = "Schedule Updated",
+					Description = $"The new time is set to {newTime}.",
+					Color = DiscordColor.Green
+				});
+			}
+			else
+			{
+				await ctx.EditResponseAsync(new DiscordEmbedBuilder
+				{
+					Title = "Invalid Time Format",
+					Description = "Please provide the time in HH:mm format.",
+					Color = DiscordColor.Red
+				});
+			}
+		}*/
+	}
 }

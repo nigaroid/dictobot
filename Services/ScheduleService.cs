@@ -1,65 +1,64 @@
-using Dictobot.Additions;
-using DSharpPlus;
 using DSharpPlus.Entities;
-
-namespace Dictobot.Services
+using DSharpPlus;
+using Dictobot.Database;
+public sealed class ScheduleService
 {
-    public sealed class ScheduleService
-    {
-        private static TimeSpan _scheduledTime = new(9, 0, 0);
-        private TimeSpan GetDelay()
-        {
-            TimeSpan messageTime = _scheduledTime;
-            TimeSpan currentTime = DateTime.UtcNow.TimeOfDay;
+	private static TimeSpan _scheduledTime = new(11, 57, 0);
 
-            return messageTime > currentTime ? messageTime - currentTime
-                                             : new TimeSpan(1, 0, 0, 0) - currentTime + messageTime;
-        }
-		private async Task<DiscordChannel?> GetDefaultChannel(string guildIDString, DiscordClient client)
+	private readonly DatabaseEngine _databaseEngine = new();
+	private TimeSpan GetDelay()
+	{
+		TimeSpan messageTime = _scheduledTime;
+		TimeSpan currentTime = DateTime.UtcNow.TimeOfDay;
+
+		return messageTime > currentTime ? messageTime - currentTime
+										 : new TimeSpan(1, 0, 0, 0) - currentTime + messageTime;
+	}
+	private async Task<DiscordChannel?> GetDefaultChannel(string guildID, DiscordClient client)
+	{
+		if (!ulong.TryParse(guildID, out ulong ulonGuildID))
+			return null;
+
+		var guild = await client.GetGuildAsync(ulonGuildID);
+		var totalChannels = await guild.GetChannelsAsync();
+
+		if (totalChannels == null)
+			return null;
+
+		return totalChannels.FirstOrDefault(x => !x.IsCategory);
+	}
+	private async Task SendMessageToChannels(DiscordClient client, DiscordWebhookBuilder webhookBuilder)
+	{
+		await foreach (var guildID in _databaseEngine.GetGuildIDsAsync())
 		{
-			if (!ulong.TryParse(guildIDString, out ulong guildID))
-				return null;
+			var channels = await _databaseEngine.GetGuildChannelIDsAsync(guildID);
 
-			DiscordGuild guild = await client.GetGuildAsync(guildID);
-			var totalChannels = await guild.GetChannelsAsync();
-
-			if (totalChannels == null)
-				return null;
-
-			return totalChannels.FirstOrDefault(x => x != null && !x.IsCategory);
-		}
-		private async Task SendMessageToChannels(DiscordClient client, DiscordWebhookBuilder webhookBuilder)
-		{
-			foreach (var (guildIDString, channels) in Globals.GuildDatabase!)
+			if (channels == null)
 			{
-				if (channels == null)
-				{
-					var defaultChannel = await GetDefaultChannel(guildIDString, client);
+				var defaultChannel = await GetDefaultChannel(guildID, client);
 
-					if (defaultChannel != null)
-						await defaultChannel.SendMessageAsync(webhookBuilder.Embeds[0]);
-				}
-				else
-				{
-					foreach (var channel in channels!)
+				if (defaultChannel != null)
+					await defaultChannel.SendMessageAsync(webhookBuilder.Embeds[0]);
+			}
+			else
+			{
+				foreach (var channelID in channels)
+					if (ulong.TryParse(channelID, out ulong ulongChannelID))
+					{
+						var channel = await client.GetChannelAsync(ulongChannelID);
 						await channel.SendMessageAsync(webhookBuilder.Embeds[0]);
-				}
+					}
 			}
 		}
-		public async Task SendEmbedMessageAsync(DiscordClient client)
-        {
-            var webhookBuilder = await Webhooks.WebhookBuilder.GetDictionaryWebhookBuilderAsync();
+	}
+	public async Task SendEmbedMessageAsync(DiscordClient client)
+	{
+		var webhookBuilder = await Dictobot.Webhooks.WebhookBuilder.GetDictionaryWebhookBuilderAsync();
 
-            while (true)
-            {
-                TimeSpan delay = GetDelay();
-                await Task.Delay(delay);
-
-                if (!Globals.GuildDatabase!.Any())
-                    return;
-
-				await SendMessageToChannels(client, webhookBuilder);
-			}
-        }
-    }
+		while (true)
+		{
+			await Task.Delay(GetDelay());
+			await SendMessageToChannels(client, webhookBuilder);
+		}
+	}
 }
