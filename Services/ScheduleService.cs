@@ -4,7 +4,7 @@ using Dictobot.Database;
 using Dictobot.Configuration.Structures;
 public sealed class ScheduleService
 {
-	private static TimeOnly _scheduledTime = new(8, 22, 10);
+	private static TimeOnly _scheduledTime = new(9, 25, 3);
 	private TimeSpan GetDelay()
 	{
 		TimeOnly messageTime = _scheduledTime;
