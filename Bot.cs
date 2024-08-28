@@ -2,8 +2,6 @@ using DSharpPlus;
 using DSharpPlus.EventArgs;
 using DSharpPlus.SlashCommands;
 using Dictobot.Configuration.Structures;
-using Newtonsoft.Json;
-using Dictobot.Services;
 using Dictobot.Commands;
 
 namespace Dictobot

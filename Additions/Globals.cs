@@ -8,21 +8,21 @@ public static class Globals
 	private static readonly DatabaseEngine _databaseEngineService = new();
 	public static async Task GuildDatabaseInitAsync(DiscordClient client)
 	{
-		await foreach (var guildIDString in _databaseEngineService.GetGuildIDsAsync())
+		await foreach (var guildID in _databaseEngineService.GetGuildIDsAsync())
 		{
 			List<DiscordChannel> channels = new();
 
-			var channelIDs = await _databaseEngineService.GetGuildChannelIDsAsync(guildIDString);
+			var channelIDs = await _databaseEngineService.GetGuildChannelIDsAsync(guildID);
 
-			foreach (var channelIDString in channelIDs!)
-				if (!string.IsNullOrEmpty(channelIDString))
+			foreach (var channelID in channelIDs!)
+				if (!string.IsNullOrEmpty(channelID))
 				{
-					if (!ulong.TryParse(guildIDString, out ulong guildID) ||
-						!ulong.TryParse(channelIDString, out ulong channelID))
+					if (!ulong.TryParse(guildID, out ulong parsedGuildID) ||
+						!ulong.TryParse(channelID, out ulong parsedChannelID))
 						return;
 
-					var guild = await client.GetGuildAsync(guildID);
-					var channel = await client.GetChannelAsync(channelID);
+					var guild = await client.GetGuildAsync(parsedGuildID);
+					var channel = await client.GetChannelAsync(parsedChannelID);
 
 					if (channel == null)
 						continue;

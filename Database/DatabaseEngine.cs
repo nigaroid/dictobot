@@ -8,20 +8,9 @@ public class DatabaseEngine
 	private string? _connectionString;
 	public DatabaseEngine()
 	{
-
-		if (DatabaseSettingsStructure.Data == null)
-		{
-			throw new InvalidOperationException("Database settings have not been loaded.");
-		}
-
 		_connectionString = $"Host={DatabaseSettingsStructure.Data?.Host};Port={DatabaseSettingsStructure.Data?.Port};Username={DatabaseSettingsStructure.Data?.Username};Password={DatabaseSettingsStructure.Data?.Password};Database={DatabaseSettingsStructure.Data?.DatabaseName}";
 
 		_tableNameAbsolute = $"{DatabaseSettingsStructure.Data?.DatabaseName}.{DatabaseSettingsStructure.Data?.SchemaName}.{DatabaseSettingsStructure.Data?.TableName}";
-
-		if (string.IsNullOrEmpty(_connectionString))
-		{
-			throw new InvalidOperationException("Connection string is null or empty.");
-		}
 	}
 	private async Task<long> GetTotalGuild()
 	{
