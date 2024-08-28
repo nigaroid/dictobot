@@ -28,16 +28,5 @@ namespace Dictobot.Configuration.Structures
 
 		[JsonProperty("table_name")]
 		public string? TableName { get; set; }
-		public async Task Load()
-		{
-			var data = await Initialize();
-			Shared.Username = data?.Username ?? null;
-			Shared.Password = data?.Password ?? null;
-			Shared.Host = data?.Host ?? null;
-			Shared.Port = data?.Port ?? null;
-			Shared.DatabaseName = data?.DatabaseName ?? null;
-			Shared.SchemaName = data?.SchemaName ?? null;
-			Shared.TableName = data?.TableName ?? null;
-		}
 	}
 }

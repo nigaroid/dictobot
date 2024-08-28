@@ -10,10 +10,5 @@ namespace Dictobot.Configuration.Structures
 
 		[JsonProperty("token")]
 		public string? Token { get; set; }
-		public async Task Load()
-		{
-			var data = await Initialize();
-			Shared.Token = data?.Token ?? null;
-		}
 	}
 }

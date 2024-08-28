@@ -6,8 +6,7 @@ namespace Dictobot.Webhooks;
 public static class WebhookBuilder
 {
 	private static DictionaryService? _dictionaryService;
-
-	private static DiscordColor[] Colors = [DiscordColor.Green, DiscordColor.Yellow, DiscordColor.Red];
+	private static DiscordColor[] Colors => [DiscordColor.Green, DiscordColor.Yellow, DiscordColor.Red];
 	private static class Status
 	{
 		public const int Success = 0;

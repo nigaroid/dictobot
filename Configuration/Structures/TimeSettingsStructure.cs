@@ -1,4 +1,4 @@
-/*using Dictobot.Configuration.Structures;
+using Dictobot.Configuration.Structures;
 using DSharpPlus;
 using Newtonsoft.Json;
 public sealed class TimeSettingsStructure : JSONReader<TimeSettingsStructure>
@@ -22,14 +22,8 @@ public sealed class TimeSettingsStructure : JSONReader<TimeSettingsStructure>
 		Time = parsedTime;
 		await File.WriteAllTextAsync(FileName!, json);
 
-		// check the file
 		string jsonString = await File.ReadAllTextAsync(FileName);
 		Console.WriteLine($"Reading the file ...\n\n{jsonString}");
 	}
-	public async Task Load()
-	{
-		var data = await Initialize();
-		Shared.Time = data!.Time;
-	}
 }
-*/
+

@@ -7,19 +7,19 @@ namespace Dictobot.Services
 	public sealed class DictionaryService
 	{
         private readonly HttpClient _httpClient = new();
-		private string URL => "https://www.merriam-webster.com/word-of-the-day";
 
-		private string? URLAbsolute;
+		private readonly string _url = "https://www.merriam-webster.com/word-of-the-day";
+		public string? URLAbsolute { get; private set; }
 		private bool IsDictionaryObject(string input) => !input.Contains("See the entry");
 		public DictionaryService()
 		{
-			URLAbsolute = $"{URL}/{$"{DateTime.UtcNow.Year.ToString("00")}-" +
+			URLAbsolute = $"{_url}/{$"{DateTime.UtcNow.Year.ToString("00")}-" +
 						  $"{DateTime.UtcNow.Month.ToString("00")}-" +
 						  $"{DateTime.UtcNow.Day.ToString("00")}"}";
 		}
         public DictionaryService(string date)
         {
-			URLAbsolute = $"{URL}/{date}";
+			URLAbsolute = $"{_url}/{date}";
         }
         private async Task<HtmlDocument> GetResponseHtml()
         {

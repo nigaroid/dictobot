@@ -22,7 +22,7 @@ namespace Dictobot
 			var configuration = new DiscordConfiguration()
             {
                 Intents = DiscordIntents.All,
-                Token = APIStructure.Shared.Token,
+                Token = APIStructure.Data?.Token,
                 TokenType = TokenType.Bot,
                 AutoReconnect = true,
             };

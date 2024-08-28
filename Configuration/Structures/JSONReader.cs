@@ -14,5 +14,10 @@ namespace Dictobot.Configuration.Structures
 				return JsonConvert.DeserializeObject<T>(json);
 			}
 		}
+		public virtual async Task Load()
+		{
+			var data = await Initialize();
+			Data = data;
+		}
 	}
 }

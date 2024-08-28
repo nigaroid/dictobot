@@ -9,14 +9,14 @@ public class DatabaseEngine
 	public DatabaseEngine()
 	{
 
-		if (DatabaseSettingsStructure.Shared == null)
+		if (DatabaseSettingsStructure.Data == null)
 		{
 			throw new InvalidOperationException("Database settings have not been loaded.");
 		}
 
-		_connectionString = $"Host={DatabaseSettingsStructure.Shared?.Host};Port={DatabaseSettingsStructure.Shared?.Port};Username={DatabaseSettingsStructure.Shared?.Username};Password={DatabaseSettingsStructure.Shared?.Password};Database={DatabaseSettingsStructure.Shared?.DatabaseName}";
+		_connectionString = $"Host={DatabaseSettingsStructure.Data?.Host};Port={DatabaseSettingsStructure.Data?.Port};Username={DatabaseSettingsStructure.Data?.Username};Password={DatabaseSettingsStructure.Data?.Password};Database={DatabaseSettingsStructure.Data?.DatabaseName}";
 
-		_tableNameAbsolute = $"{DatabaseSettingsStructure.Shared?.DatabaseName}.{DatabaseSettingsStructure.Shared?.SchemaName}.{DatabaseSettingsStructure.Shared?.TableName}";
+		_tableNameAbsolute = $"{DatabaseSettingsStructure.Data?.DatabaseName}.{DatabaseSettingsStructure.Data?.SchemaName}.{DatabaseSettingsStructure.Data?.TableName}";
 
 		if (string.IsNullOrEmpty(_connectionString))
 		{
