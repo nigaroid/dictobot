@@ -1,4 +1,4 @@
-using Dictobot.Configuration;
+using Dictobot.Configuration.Structures;
 using Npgsql;
 namespace Dictobot.Database;
 public class DatabaseEngine
@@ -8,11 +8,20 @@ public class DatabaseEngine
 	private string? _connectionString;
 	public DatabaseEngine()
 	{
-		DatabaseSettingsStructure.InitializeAsync().GetAwaiter().GetResult();
 
-		_connectionString = $"Host={JSONReader<DatabaseSettingsStructure>.Data?.Host};Port={JSONReader<DatabaseSettingsStructure>.Data?.Port};Username={JSONReader<DatabaseSettingsStructure>.Data?.Username};Password={JSONReader<DatabaseSettingsStructure>.Data?.Password};Database={JSONReader<DatabaseSettingsStructure>.Data?.DatabaseName}";
+		if (DatabaseSettingsStructure.Shared == null)
+		{
+			throw new InvalidOperationException("Database settings have not been loaded.");
+		}
 
-		_tableNameAbsolute = $"{JSONReader<DatabaseSettingsStructure>.Data?.DatabaseName}.{JSONReader<DatabaseSettingsStructure>.Data?.SchemaName}.{JSONReader<DatabaseSettingsStructure>.Data?.TableName}";
+		_connectionString = $"Host={DatabaseSettingsStructure.Shared?.Host};Port={DatabaseSettingsStructure.Shared?.Port};Username={DatabaseSettingsStructure.Shared?.Username};Password={DatabaseSettingsStructure.Shared?.Password};Database={DatabaseSettingsStructure.Shared?.DatabaseName}";
+
+		_tableNameAbsolute = $"{DatabaseSettingsStructure.Shared?.DatabaseName}.{DatabaseSettingsStructure.Shared?.SchemaName}.{DatabaseSettingsStructure.Shared?.TableName}";
+
+		if (string.IsNullOrEmpty(_connectionString))
+		{
+			throw new InvalidOperationException("Connection string is null or empty.");
+		}
 	}
 	private async Task<long> GetTotalGuild()
 	{

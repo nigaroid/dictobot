@@ -1,18 +1,17 @@
 using DSharpPlus.Entities;
 using DSharpPlus;
 using Dictobot.Database;
+using Dictobot.Configuration.Structures;
 public sealed class ScheduleService
 {
-	private static TimeSpan _scheduledTime = new(11, 57, 0);
-
-	private readonly DatabaseEngine _databaseEngine = new();
+	private static TimeOnly _scheduledTime = new(8, 22, 10);
 	private TimeSpan GetDelay()
 	{
-		TimeSpan messageTime = _scheduledTime;
-		TimeSpan currentTime = DateTime.UtcNow.TimeOfDay;
+		TimeOnly messageTime = _scheduledTime;
+		TimeOnly currentTime = TimeOnly.FromTimeSpan(DateTime.UtcNow.TimeOfDay);
 
 		return messageTime > currentTime ? messageTime - currentTime
-										 : new TimeSpan(1, 0, 0, 0) - currentTime + messageTime;
+										 : new TimeSpan(1, 0, 0, 0) - (currentTime.ToTimeSpan() + messageTime.ToTimeSpan());
 	}
 	private async Task<DiscordChannel?> GetDefaultChannel(string guildID, DiscordClient client)
 	{
@@ -29,9 +28,12 @@ public sealed class ScheduleService
 	}
 	private async Task SendMessageToChannels(DiscordClient client, DiscordWebhookBuilder webhookBuilder)
 	{
-		await foreach (var guildID in _databaseEngine.GetGuildIDsAsync())
+		var databaseEngine = new DatabaseEngine();
+		await DatabaseSettingsStructure.Shared.Load();
+
+		await foreach (var guildID in databaseEngine.GetGuildIDsAsync())
 		{
-			var channels = await _databaseEngine.GetGuildChannelIDsAsync(guildID);
+			var channels = await databaseEngine.GetGuildChannelIDsAsync(guildID);
 
 			if (channels == null)
 			{
