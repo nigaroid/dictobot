@@ -37,11 +37,7 @@ namespace Dictobot.Services
             await foreach (var @object in GetObjectsAsync())
                 objects.Add(@object);
 
-            return new DiscordWebhookBuilder().AddEmbed(new DiscordEmbedBuilder()
-                .WithColor(DiscordColor.Blurple)
-                .WithTitle($"{objects[0]}\t[{objects[2]}]\t({objects[1]})\n\nWhat It Means?\n\n")
-                .WithDescription($"{objects[3]}\n\n")
-                .WithFooter($"{objects[4]}"));
+            return Webhooks.WebhookBuilder.WOTDMessage(objects);
         }
         public async IAsyncEnumerable<string> GetObjectsAsync()
         {
@@ -52,16 +48,16 @@ namespace Dictobot.Services
             var attributes = document.DocumentNode.SelectNodes("//div[contains(@class, 'word-attributes')]");
             var dateInfo = document.DocumentNode.SelectNodes("//div[contains(@class, 'w-a-title')]")[0];
 
-            if (wotd != null && description != null && attributes != null && dateInfo != null)
+			if (wotd == null || description == null || attributes == null || dateInfo == null)
+				yield return default!;
+
+			foreach (var attribute in attributes!)
 			{
-				foreach (var attribute in attributes)
-				{
-					yield return wotd?.InnerText.Trim().ToUpper()[0] + wotd!.InnerText.Trim().Substring(1);
-					yield return Regex.Replace(attribute.InnerText, @"\s+", " ").Trim().Split().ToList()[0].ToString();
-					yield return Regex.Replace(attribute.InnerText, @"\s+", " ").Trim().Split().ToList()[1].ToString();
-					yield return string.Join("\n\n", description.Select(x => x.InnerText.Trim()).Where(x => IsDictionaryObject(x))).ToString();
-					yield return Regex.Replace(dateInfo.InnerText.Split('\n')[2].ToString(), @"\s+", " ").Trim().Split(':')[1].ToString();
-				}
+				yield return wotd?.InnerText.Trim().ToUpper()[0] + wotd!.InnerText.Trim().Substring(1);
+				yield return Regex.Replace(attribute.InnerText, @"\s+", " ").Trim().Split().ToList()[0].ToString();
+				yield return Regex.Replace(attribute.InnerText, @"\s+", " ").Trim().Split().ToList()[1].ToString();
+				yield return string.Join("\n\n", description!.Select(x => x.InnerText.Trim()).Where(x => IsDictionaryObject(x))).ToString();
+				yield return Regex.Replace(dateInfo!.InnerText.Split('\n')[2].ToString(), @"\s+", " ").Trim().Split(':')[1].ToString();
 			}
         }
     }

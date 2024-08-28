@@ -10,9 +10,10 @@ namespace Dictobot
     {
         private static DiscordClient? _client;
 
-        private static SlashCommands _slashCommands = new();
+        private static readonly SlashCommands _slashCommands = new();
+ 
+        private static readonly ScheduleService _scheduleService = new();
 
-        private static ScheduleService _scheduleService = new();
         private static async Task BotInit()
 		{
 			await APIStructure.Shared.Load();
@@ -37,30 +38,38 @@ namespace Dictobot
 			await DatabaseInit();
 			await ServicesInit();
         }
-        private static Task OnClientReady(DiscordClient sender, ReadyEventArgs args) => Task.CompletedTask;
-        private static Task OnGuildAvailable(DiscordClient client, GuildCreateEventArgs args) => Task.CompletedTask;
-        private static void SlashCommandsInit()
+
+		private static Task OnClientReady(DiscordClient sender, ReadyEventArgs args) => Task.CompletedTask;
+
+		private static Task OnGuildAvailable(DiscordClient client, GuildCreateEventArgs args) => Task.CompletedTask;
+
+		private static void SlashCommandsInit()
         {
             var commandConfig = _client.UseSlashCommands();
             commandConfig.RegisterCommands<SlashCommands>();
         }
-        private static async Task ScheduleServiceInit()
+
+		private static async Task ScheduleServiceInit()
         {
 			await _scheduleService.SendEmbedMessageAsync(_client!);
         }
+
 		private static async Task DatabaseInit()
 		{
 			await DatabaseSettingsStructure.Shared.Load();
 		}
+
 		private static async Task ServicesInit()
 		{
             await ScheduleServiceInit();
 		}
+
 		private static async Task BotRun()
         {
             await Task.Delay(Timeout.Infinite);
         }
-        private static async Task Main()
+
+		private static async Task Main()
         {
             await BotInit();
             await BotRun();

@@ -5,8 +5,10 @@ namespace Dictobot.Configuration.Structures
 	public abstract class JSONReader<T> where T : class
 	{
 		public static T? Data { get; protected set; }
-		protected virtual string FileName => String.Empty;
-		protected async Task<T?> Initialize()
+
+		protected abstract string FileName { get; }
+
+		private async Task<T?> Initialize()
 		{
 			using (StreamReader sr = new StreamReader(FileName))
 			{
@@ -14,6 +16,7 @@ namespace Dictobot.Configuration.Structures
 				return JsonConvert.DeserializeObject<T>(json);
 			}
 		}
+
 		public virtual async Task Load()
 		{
 			var data = await Initialize();

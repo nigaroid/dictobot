@@ -1,8 +1,6 @@
 using DSharpPlus.SlashCommands;
 using DSharpPlus.Entities;
 using Dictobot.Database;
-using Dictobot.Configuration;
-using Dictobot.Commands;
 using Dictobot.Services;
 
 namespace Dictobot.Commands
@@ -13,6 +11,8 @@ namespace Dictobot.Commands
 
 		private static readonly DatabaseEngine _databaseEngine = new();
 
+		private static readonly ScheduleService _scheduleService = new();
+
 		[SlashCommand("wotd", "Send the word of the day.")]
 		public async Task SendWOTD(InteractionContext ctx)
 		{
@@ -22,7 +22,7 @@ namespace Dictobot.Commands
 		}
 
 		[SlashCommand("wotdof", "Send the word of the day.")]
-		public async Task SendWOTDByDate(InteractionContext ctx, [Option("date", "Date within the current year, in the format YYYY-MM-DD")] string date)
+		public async Task SendWOTDByDate(InteractionContext ctx, [Option("date", "date within the current year as yyyy-mm-dd")] string date)
 		{
 			await ctx.DeferAsync();
 
@@ -37,7 +37,7 @@ namespace Dictobot.Commands
 			}
 		}
 
-		[SlashCommand("register", "Register a channel within the server to recieve a daily message")]
+		[SlashCommand("register", "Register a channel within the server to recieve a daily message.")]
 		public async Task RegisterChannel(InteractionContext ctx, [Option("channel", "channel tag (can't be a category)")] DiscordChannel channel)
 		{
 			await ctx.DeferAsync();
@@ -61,16 +61,17 @@ namespace Dictobot.Commands
 				return;
 			}
 
-			if (!await _databaseEngine.RegisterGuildChannelsAsync(guild, channelID))
+			if (!await _databaseEngine.RegisterChannelsAsync(guild, channelID))
 			{
 				await ctx.EditResponseAsync(Webhooks.WebhookBuilder.DatabaseFailure());
 				return;
 			}
+
 			await ctx.EditResponseAsync(Webhooks.WebhookBuilder.RegisterSuccess(channel));
 		}
 
 		[SlashCommand("deregister", "Input a channel ID you want to deregister the bot into.")]
-		public async Task DeregisterChannel(InteractionContext ctx, [Option("channel", "channel ID within the server")] DiscordChannel channel)
+		public async Task DeregisterChannel(InteractionContext ctx, [Option("channel", "channel tag within the server")] DiscordChannel channel)
 		{
 			await ctx.DeferAsync();
 
@@ -81,22 +82,36 @@ namespace Dictobot.Commands
 			};
 
 			string channelID = channel.Id.ToString();
-
 			if (!await _databaseEngine.ChannelExistsAsync(guild, channelID))
 			{
 				await ctx.EditResponseAsync(Webhooks.WebhookBuilder.DeregisterChannelNotExistsFailure(channel));
 				return;
 			}
 
-			if (!await _databaseEngine.DeregisterGuildChannelsAsync(guild, channelID))
+			if (!await _databaseEngine.DeregisterChannelsAsync(guild, channelID))
 			{
 				await ctx.EditResponseAsync(Webhooks.WebhookBuilder.DatabaseFailure());
 				return;
 			}
+
 			await ctx.EditResponseAsync(Webhooks.WebhookBuilder.DeregisterSuccess(channel));
 		}
 
-		/*[SlashCommand("setschedule", "Set a new schedule time.")]
-		public async Task SetScheduleCommand(InteractionContext ctx, [Option("time", "New scheduled time in HH:mm format")] string time);*/
+		[SlashCommand("setschedule", "Set a new schedule time.")]
+		public async Task UpdateScheduledTime(InteractionContext ctx, [Option("time", "scheduled time as hh:mm:ss in 24-hour format")] string time)
+		{
+			await ctx.DeferAsync();
+
+			if (!TimeOnly.TryParseExact(time, "HH:mm:ss", out TimeOnly parsedTime))
+			{
+				await ctx.EditResponseAsync(Webhooks.WebhookBuilder.TimeOnlyParseFailure());
+				return;
+			}
+
+			await TimeSettingsStructure.Shared.SetTimeSettingsAsync(parsedTime);
+			await TimeSettingsStructure.Shared.Load();
+			
+			await ctx.EditResponseAsync(Webhooks.WebhookBuilder.ParseSuccess(TimeSettingsStructure.Data?.Time!));
+		}
 	}
 }

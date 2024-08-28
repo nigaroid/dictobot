@@ -1,18 +1,21 @@
 using Dictobot.Configuration.Structures;
 using Npgsql;
+
 namespace Dictobot.Database;
 public class DatabaseEngine
 {
 	private string? _tableNameAbsolute;
 
 	private string? _connectionString;
+
 	public DatabaseEngine()
 	{
 		_connectionString = $"Host={DatabaseSettingsStructure.Data?.Host};Port={DatabaseSettingsStructure.Data?.Port};Username={DatabaseSettingsStructure.Data?.Username};Password={DatabaseSettingsStructure.Data?.Password};Database={DatabaseSettingsStructure.Data?.DatabaseName}";
 
 		_tableNameAbsolute = $"{DatabaseSettingsStructure.Data?.DatabaseName}.{DatabaseSettingsStructure.Data?.SchemaName}.{DatabaseSettingsStructure.Data?.TableName}";
 	}
-	private async Task<long> GetTotalGuild()
+
+	private async Task<long> TotalGuild()
 	{
 		using (var conn = new NpgsqlConnection(_connectionString))
 		{
@@ -27,6 +30,7 @@ public class DatabaseEngine
 			}
 		}
 	}
+
 	private async Task<bool> GuildExists(DGuild guild)
 	{
 		using (var conn = new NpgsqlConnection(_connectionString))
@@ -42,9 +46,10 @@ public class DatabaseEngine
 			}
 		}
 	}
+
 	private async Task<bool> StoreGuild(DGuild guild)
 	{
-		long guildRegistryNo = await GetTotalGuild() + 1;
+		long guildRegistryNo = await TotalGuild() + 1;
 
 		if (guildRegistryNo == -1)
 			return false;
@@ -62,6 +67,7 @@ public class DatabaseEngine
 			}
 		}
 	}
+
 	public async Task<bool> ChannelExistsAsync(DGuild guild, string channelID)
 	{
 		using (var conn = new NpgsqlConnection(_connectionString))
@@ -77,7 +83,8 @@ public class DatabaseEngine
 			}
 		}
 	}
-	public async Task<bool> RegisterGuildChannelsAsync(DGuild guild, string channelID)
+
+	public async Task<bool> RegisterChannelsAsync(DGuild guild, string channelID)
 	{
 		using (var conn = new NpgsqlConnection(_connectionString))
 		{
@@ -96,7 +103,8 @@ public class DatabaseEngine
 			return true;
 		}
 	}
-	public async Task<bool> DeregisterGuildChannelsAsync(DGuild guild, string channelID)
+
+	public async Task<bool> DeregisterChannelsAsync(DGuild guild, string channelID)
 	{
 		using (var conn = new NpgsqlConnection(_connectionString))
 		{
@@ -112,6 +120,7 @@ public class DatabaseEngine
 			return true;
 		}
 	}
+
 	public async IAsyncEnumerable<string> GetGuildIDsAsync()
 	{
 		using (var conn = new NpgsqlConnection(_connectionString))
@@ -137,13 +146,14 @@ public class DatabaseEngine
 			}
 		}
 	}
-	public async Task<List<string>?> GetGuildChannelIDsAsync(string guildID)
+
+	public async Task<List<string>?> GetChannelIDsAsync(DGuild guild)
 	{
 		using (var conn = new NpgsqlConnection(_connectionString))
 		{
 			await conn.OpenAsync();
 
-			string query = $"SELECT channels FROM {_tableNameAbsolute} WHERE guild_id=\'{guildID}\'";
+			string query = $"SELECT channels FROM {_tableNameAbsolute} WHERE guild_id=\'{guild.GuildID}\'";
 
 			using (var cmd = new NpgsqlCommand(query, conn))
 			{

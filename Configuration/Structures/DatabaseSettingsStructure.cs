@@ -5,7 +5,9 @@ namespace Dictobot.Configuration.Structures
 	public sealed class DatabaseSettingsStructure : JSONReader<DatabaseSettingsStructure>
 	{
 		private static readonly Lazy<DatabaseSettingsStructure> _sharedInstance = new(() => new());
+
 		protected override string FileName => "database-config.json";
+
 		public static DatabaseSettingsStructure Shared => _sharedInstance.Value;
 
 		[JsonProperty("username")]
