@@ -14,7 +14,7 @@ namespace Dictobot.Commands
 		private static readonly ScheduleService _scheduleService = new();
 
 		[SlashCommand("wotd", "Send the word of the day.")]
-		public async Task SendWOTD(InteractionContext ctx)
+		public async Task SendWotd(InteractionContext ctx)
 		{
 			await ctx.DeferAsync();
 			var embedBuilder = await Webhooks.WebhookBuilder.GetDictionaryWebhookBuilderAsync();
@@ -22,7 +22,7 @@ namespace Dictobot.Commands
 		}
 
 		[SlashCommand("wotdof", "Send the word of the day.")]
-		public async Task SendWOTDByDate(InteractionContext ctx, [Option("date", "date within the current year as yyyy-mm-dd")] string date)
+		public async Task SendWotdByDate(InteractionContext ctx, [Option("date", "date within the current year as yyyy-mm-dd")] string date)
 		{
 			await ctx.DeferAsync();
 
@@ -50,18 +50,19 @@ namespace Dictobot.Commands
 
 			var guild = new DGuild
 			{
-				GuildID = ctx.Guild.Id.ToString(),
+				GuildId = ctx.Guild.Id.ToString(),
 				ServerName = ctx.Guild.Name
 			};
 
-			string channelID = channel.Id.ToString();
-			if (await _databaseEngine.ChannelExistsAsync(guild, channelID))
+			string channelId = channel.Id.ToString();
+
+			if (await _databaseEngine.ChannelExistsAsync(guild, channelId))
 			{
 				await ctx.EditResponseAsync(Webhooks.WebhookBuilder.RegisterChannelExistsFailure(channel));
 				return;
 			}
 
-			if (!await _databaseEngine.RegisterChannelsAsync(guild, channelID))
+			if (!await _databaseEngine.RegisterChannelsAsync(guild, channelId))
 			{
 				await ctx.EditResponseAsync(Webhooks.WebhookBuilder.DatabaseFailure());
 				return;
@@ -77,18 +78,18 @@ namespace Dictobot.Commands
 
 			var guild = new DGuild
 			{
-				GuildID = ctx.Guild.Id.ToString(),
+				GuildId = ctx.Guild.Id.ToString(),
 				ServerName = ctx.Guild.Name,
 			};
 
-			string channelID = channel.Id.ToString();
-			if (!await _databaseEngine.ChannelExistsAsync(guild, channelID))
+			string channelId = channel.Id.ToString();
+			if (!await _databaseEngine.ChannelExistsAsync(guild, channelId))
 			{
 				await ctx.EditResponseAsync(Webhooks.WebhookBuilder.DeregisterChannelNotExistsFailure(channel));
 				return;
 			}
 
-			if (!await _databaseEngine.DeregisterChannelsAsync(guild, channelID))
+			if (!await _databaseEngine.DeregisterChannelsAsync(guild, channelId))
 			{
 				await ctx.EditResponseAsync(Webhooks.WebhookBuilder.DatabaseFailure());
 				return;

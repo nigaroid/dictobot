@@ -9,21 +9,26 @@ namespace Dictobot.Services
         private readonly HttpClient _httpClient = new();
 
 		private readonly string _url = "https://www.merriam-webster.com/word-of-the-day";
-		public string? URLAbsolute { get; private set; }
+
+		public string? UrlAbsolute { get; private set; }
+
 		private bool IsDictionaryObject(string input) => !input.Contains("See the entry");
+
 		public DictionaryService()
 		{
-			URLAbsolute = $"{_url}/{$"{DateTime.UtcNow.Year.ToString("00")}-" +
-						  $"{DateTime.UtcNow.Month.ToString("00")}-" +
-						  $"{DateTime.UtcNow.Day.ToString("00")}"}";
+			UrlAbsolute = $"{_url}/{$"{DateTime.UtcNow.Year.ToString("00")}-" +
+									$"{DateTime.UtcNow.Month.ToString("00")}-" +
+									$"{DateTime.UtcNow.Day.ToString("00")}"}";
 		}
-        public DictionaryService(string date)
+
+		public DictionaryService(string date)
         {
-			URLAbsolute = $"{_url}/{date}";
+			UrlAbsolute = $"{_url}/{date}";
         }
-        private async Task<HtmlDocument> GetResponseHtml()
+
+		private async Task<HtmlDocument> GetResponseHtml()
         {
-            HttpResponseMessage response = await _httpClient.GetAsync(URLAbsolute);
+            HttpResponseMessage response = await _httpClient.GetAsync(UrlAbsolute);
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
 
@@ -31,25 +36,27 @@ namespace Dictobot.Services
             document.LoadHtml(responseBody);
             return document;
         }
-        public async Task<DiscordWebhookBuilder> GetWebhookBuilderAsync()
+
+		public async Task<DiscordWebhookBuilder> GetWebhookBuilderAsync()
         {
             var objects = new List<string>();
             await foreach (var @object in GetObjectsAsync())
                 objects.Add(@object);
 
-            return Webhooks.WebhookBuilder.WOTDMessage(objects);
+            return Webhooks.WebhookBuilder.WotdMessage(objects);
         }
-        public async IAsyncEnumerable<string> GetObjectsAsync()
+
+		public async IAsyncEnumerable<string?> GetObjectsAsync()
         {
             HtmlDocument document = await GetResponseHtml();
 
-            var wotd = document.DocumentNode.SelectSingleNode("//div[contains(@class, 'word-and-pronunciation')]/h2");
+            var wotd		= document.DocumentNode.SelectSingleNode("//div[contains(@class, 'word-and-pronunciation')]/h2");
             var description = document.DocumentNode.SelectNodes("//div[contains(@class, 'wod-definition-container')]/p");
-            var attributes = document.DocumentNode.SelectNodes("//div[contains(@class, 'word-attributes')]");
-            var dateInfo = document.DocumentNode.SelectNodes("//div[contains(@class, 'w-a-title')]")[0];
+            var attributes	= document.DocumentNode.SelectNodes("//div[contains(@class, 'word-attributes')]");
+            var dateInfo	= document.DocumentNode.SelectNodes("//div[contains(@class, 'w-a-title')]")[0];
 
 			if (wotd == null || description == null || attributes == null || dateInfo == null)
-				yield return default!;
+				yield return null;
 
 			foreach (var attribute in attributes!)
 			{

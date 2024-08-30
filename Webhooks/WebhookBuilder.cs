@@ -60,7 +60,7 @@ public static class WebhookBuilder
 					.WithColor(Colors[Status.Success])
 					.WithDescription($"The new time is set to {time}."));
 
-	public static DiscordWebhookBuilder WOTDMessage(List<string> objects) => new DiscordWebhookBuilder()
+	public static DiscordWebhookBuilder WotdMessage(List<string> objects) => new DiscordWebhookBuilder()
 					.AddEmbed(new DiscordEmbedBuilder()
 					.WithColor(DiscordColor.Blurple)
 					.WithTitle($"{objects[0]}\t[{objects[2]}]\t({objects[1]})\n\nWhat It Means?\n\n")

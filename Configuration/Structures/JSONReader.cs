@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace Dictobot.Configuration.Structures
 {
-	public abstract class JSONReader<T> where T : class
+	public abstract class JsonReader<T> where T : class
 	{
 		public static T? Data { get; protected set; }
 
@@ -10,11 +10,9 @@ namespace Dictobot.Configuration.Structures
 
 		private async Task<T?> Initialize()
 		{
-			using (StreamReader sr = new StreamReader(FileName))
-			{
-				var json = await sr.ReadToEndAsync();
-				return JsonConvert.DeserializeObject<T>(json);
-			}
+			using StreamReader sr = new StreamReader(FileName);
+			var json = await sr.ReadToEndAsync();
+			return JsonConvert.DeserializeObject<T>(json);
 		}
 
 		public virtual async Task Load()

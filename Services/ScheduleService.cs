@@ -21,39 +21,36 @@ public sealed class ScheduleService
 		if (!ulong.TryParse(guildID, out ulong parsedGuildID))
 			return null;
 
-		var guild = await client.GetGuildAsync(parsedGuildID);
+		var guild	 = await client.GetGuildAsync(parsedGuildID);
 		var channels = await guild.GetChannelsAsync();
 
-		if (channels == null)
-			return null;
-
-		return channels.FirstOrDefault(x => !x.IsCategory);
+		return channels == null ? null : channels.FirstOrDefault(x => !x.IsCategory);
 	}
 
 	private async Task SendMessageToChannels(DiscordClient client, DiscordWebhookBuilder webhookBuilder)
 	{
 		var databaseEngine = new DatabaseEngine();
 
-		await foreach (var guildID in databaseEngine.GetGuildIDsAsync())
+		await foreach (var guildID in databaseEngine.GetGuildsIdAsync())
 		{
-			var channelIDs = await databaseEngine.GetChannelIDsAsync(new() { GuildID = guildID });
+			var channelIDs = await databaseEngine.GetChannelsIdAsync(new() { GuildId = guildID });
 
 			if (channelIDs == null)
 			{
 				var defaultChannel = await GetDefaultChannel(guildID, client);
-
 				if (defaultChannel == null)
 					return;
 
 				await defaultChannel.SendMessageAsync(webhookBuilder.Embeds[0]);
 			}
-			else foreach (var channelID in channelIDs)
+			else
 			{
-				if (ulong.TryParse(channelID, out ulong parsedChannelID))
-				{
-					var channel = await client.GetChannelAsync(parsedChannelID);
-					await channel.SendMessageAsync(webhookBuilder.Embeds[0]);
-				}
+				foreach (var channelID in channelIDs)
+					if (ulong.TryParse(channelID, out ulong parsedChannelID))
+					{
+						var channel = await client.GetChannelAsync(parsedChannelID);
+						await channel.SendMessageAsync(webhookBuilder.Embeds[0]);
+					}
 			}
 		}
 	}
@@ -66,7 +63,6 @@ public sealed class ScheduleService
 		{
 			var delay = await GetDelay();
 			await Task.Delay(delay);
-
 			await SendMessageToChannels(client, webhookBuilder);
 		}
 	}

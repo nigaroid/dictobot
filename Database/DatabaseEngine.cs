@@ -32,7 +32,7 @@ public class DatabaseEngine
 		using var conn = new NpgsqlConnection(_connectionString);
 		await conn.OpenAsync();
 
-		string? query = $"SELECT 1 FROM {_tableNameAbsolute} WHERE guild_id='{guild.GuildID}';";
+		string? query = $"SELECT 1 FROM {_tableNameAbsolute} WHERE guild_id='{guild.GuildId}';";
 
 		using var cmd = new NpgsqlCommand(query, conn);
 		var str = await cmd.ExecuteScalarAsync();
@@ -41,34 +41,34 @@ public class DatabaseEngine
 
 	private async Task<bool> StoreGuild(DGuild guild)
 	{
-		long guildRegistryNo = await TotalGuild() + 1;
+		long registryKey = await TotalGuild() + 1;
 
-		if (guildRegistryNo == -1)
+		if (registryKey == -1)
 			return false;
 
 		using var conn = new NpgsqlConnection(_connectionString);
 		await conn.OpenAsync();
 
-		string? query = $"INSERT INTO {_tableNameAbsolute} VALUES({guildRegistryNo}, '{guild.GuildID}', '{guild.ServerName}', NULL);";
+		string? query = $"INSERT INTO {_tableNameAbsolute} VALUES({registryKey}, '{guild.GuildId}', '{guild.ServerName}', NULL);";
 
 		using var cmd = new NpgsqlCommand(query, conn);
 		await cmd.ExecuteNonQueryAsync();
 		return true;
 	}
 
-	public async Task<bool> ChannelExistsAsync(DGuild guild, string channelID)
+	public async Task<bool> ChannelExistsAsync(DGuild guild, string channelId)
 	{
 		using var conn = new NpgsqlConnection(_connectionString);
 		await conn.OpenAsync();
 
-		string? query = $"SELECT 1 FROM {_tableNameAbsolute} WHERE guild_id=\'{guild.GuildID}\' AND \'{channelID}\'=ANY(channels);";
+		string? query = $"SELECT 1 FROM {_tableNameAbsolute} WHERE guild_id=\'{guild.GuildId}\' AND \'{channelId}\'=ANY(channels);";
 
 		using var cmd = new NpgsqlCommand(query, conn);
 		var str = await cmd.ExecuteScalarAsync();
 		return str != null;
 	}
 
-	public async Task<bool> RegisterChannelsAsync(DGuild guild, string channelID)
+	public async Task<bool> RegisterChannelsAsync(DGuild guild, string channelId)
 	{
 		using var conn = new NpgsqlConnection(_connectionString);
 		await conn.OpenAsync();
@@ -76,24 +76,24 @@ public class DatabaseEngine
 		if (!await GuildExists(guild))
 			await StoreGuild(guild);
 
-		string query = $"UPDATE {_tableNameAbsolute} SET channels=ARRAY_APPEND(channels, \'{channelID}\') WHERE guild_id=\'{guild.GuildID!}\'";
+		string query = $"UPDATE {_tableNameAbsolute} SET channels=ARRAY_APPEND(channels, \'{channelId}\') WHERE guild_id=\'{guild.GuildId!}\'";
 
 		using var cmd = new NpgsqlCommand(query, conn);
 		return await cmd.ExecuteNonQueryAsync() <= 0 ? false : true;
 	}
 
-	public async Task<bool> DeregisterChannelsAsync(DGuild guild, string channelID)
+	public async Task<bool> DeregisterChannelsAsync(DGuild guild, string channelId)
 	{
 		using var conn = new NpgsqlConnection(_connectionString);
 		await conn.OpenAsync();
 
-		string query = $"UPDATE {_tableNameAbsolute} SET channels=ARRAY_REMOVE(channels, \'{channelID}\') WHERE guild_id=\'{guild.GuildID}\' AND channels IS NOT NULL";
+		string query = $"UPDATE {_tableNameAbsolute} SET channels=ARRAY_REMOVE(channels, \'{channelId}\') WHERE guild_id=\'{guild.GuildId}\' AND channels IS NOT NULL";
 
 		using var cmd = new NpgsqlCommand(query, conn);
 		return await cmd.ExecuteNonQueryAsync() <= 0 ? false : true;
 	}
 
-	public async IAsyncEnumerable<string> GetGuildIDsAsync()
+	public async IAsyncEnumerable<string?> GetGuildsIdAsync()
 	{
 		using var conn = new NpgsqlConnection(_connectionString);
 		await conn.OpenAsync();
@@ -101,37 +101,35 @@ public class DatabaseEngine
 		string query = $"SELECT guild_id FROM {_tableNameAbsolute};";
 
 		using var cmd = new NpgsqlCommand(query, conn);
-
 		using var reader = await cmd.ExecuteReaderAsync();
 		if (!reader.HasRows)
-			yield return default!;
+			yield return null;
 
 		while (await reader.ReadAsync())
 		{
-			var guildID = reader.GetString(0);
-			if (!string.IsNullOrEmpty(guildID))
-				yield return guildID;
+			var guildId = reader.GetString(0);
+			if (!string.IsNullOrEmpty(guildId))
+				yield return guildId;
 		}
 	}
 
-	public async Task<List<string>?> GetChannelIDsAsync(DGuild guild)
+	public async Task<List<string>?> GetChannelsIdAsync(DGuild guild)
 	{
 		using var conn = new NpgsqlConnection(_connectionString);
 		await conn.OpenAsync();
 
-		string query = $"SELECT channels FROM {_tableNameAbsolute} WHERE guild_id=\'{guild.GuildID}\'";
+		string query = $"SELECT channels FROM {_tableNameAbsolute} WHERE guild_id=\'{guild.GuildId}\'";
 
 		using var cmd = new NpgsqlCommand(query, conn);
-
 		using var reader = await cmd.ExecuteReaderAsync();
 		if (!reader.HasRows)
-			return default!;
+			return null;
 
 		while (await reader.ReadAsync())
 		{
-			var channelIDs = reader.GetFieldValue<List<string>>(0);
-			return channelIDs;
+			var channelsId = reader.GetFieldValue<List<string>>(0);
+			return channelsId;
 		}
-		return default;
+		return null;
 	}
 }

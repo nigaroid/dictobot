@@ -1,6 +1,6 @@
 using Dictobot.Configuration.Structures;
 using Newtonsoft.Json;
-public sealed class TimeSettingsStructure : JSONReader<TimeSettingsStructure>
+public sealed class TimeSettingsStructure : JsonReader<TimeSettingsStructure>
 {
 	private static readonly Lazy<TimeSettingsStructure> _sharedInstance = new(() => new());
 

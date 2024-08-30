@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace Dictobot.Configuration.Structures
 {
-	public sealed class DatabaseSettingsStructure : JSONReader<DatabaseSettingsStructure>
+	public sealed class DatabaseSettingsStructure : JsonReader<DatabaseSettingsStructure>
 	{
 		private static readonly Lazy<DatabaseSettingsStructure> _sharedInstance = new(() => new());
 
