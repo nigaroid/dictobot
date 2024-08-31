@@ -1,3 +1,4 @@
+using Dictobot.Database;
 using Dictobot.Services;
 using DSharpPlus.Entities;
 
@@ -30,7 +31,7 @@ public static class WebhookBuilder
 					.WithColor(Colors[Status.Failure])
 					.WithDescription("No channels were updated. This may indicate an issue with the database."));
 
-	public static DiscordWebhookBuilder RegisterSuccess(DiscordChannel channel) => new DiscordWebhookBuilder()
+	public static DiscordWebhookBuilder RegisterChannelSuccess(DiscordChannel channel) => new DiscordWebhookBuilder()
 					.AddEmbed(new DiscordEmbedBuilder()
 					.WithColor(Colors[Status.Success])
 					.WithDescription($"Channel {channel.Mention} added successfully."));
@@ -40,10 +41,30 @@ public static class WebhookBuilder
 					.WithColor(Colors[Status.Warning])
 					.WithDescription($"Channel {channel.Mention} is not registered."));
 
-	public static DiscordWebhookBuilder DeregisterSuccess(DiscordChannel channel) => new DiscordWebhookBuilder()
+	public static DiscordWebhookBuilder DeregisterChannelSuccess(DiscordChannel channel) => new DiscordWebhookBuilder()
 					.AddEmbed(new DiscordEmbedBuilder()
 					.WithColor(Colors[Status.Success])
 					.WithDescription($"Channel {channel.Mention} deleted successfully."));
+
+	public static DiscordWebhookBuilder StoreServerFailure(DGuild guild) => new DiscordWebhookBuilder()
+				.AddEmbed(new DiscordEmbedBuilder()
+				.WithColor(Colors[Status.Failure])
+				.WithDescription($"{guild.ServerName} couldn't be added to the database."));
+
+	public static DiscordWebhookBuilder StoreServerSuccess(DGuild guild) => new DiscordWebhookBuilder()
+				.AddEmbed(new DiscordEmbedBuilder()
+				.WithColor(Colors[Status.Success])
+				.WithDescription($"{guild.ServerName} added successfully."));
+
+	public static DiscordWebhookBuilder RemoveServerFailure(DGuild guild) => new DiscordWebhookBuilder()
+			.AddEmbed(new DiscordEmbedBuilder()
+			.WithColor(Colors[Status.Failure])
+			.WithDescription($"{guild.ServerName} couldn't be deleted."));
+
+	public static DiscordWebhookBuilder DeregisterServerSuccess(DGuild guild) => new DiscordWebhookBuilder()
+				.AddEmbed(new DiscordEmbedBuilder()
+				.WithColor(Colors[Status.Success])
+				.WithDescription($"{guild.ServerName} deleted successfully."));
 
 	public static DiscordWebhookBuilder InvalidDateOrFormat() => new DiscordWebhookBuilder()
 					.AddEmbed(new DiscordEmbedBuilder()

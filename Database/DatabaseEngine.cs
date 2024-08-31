@@ -1,4 +1,5 @@
 using Dictobot.Configuration.Structures;
+using Microsoft.Win32;
 using Npgsql;
 
 namespace Dictobot.Database;
@@ -39,17 +40,35 @@ public class DatabaseEngine
 		return str != null;
 	}
 
-	private async Task<bool> StoreGuild(DGuild guild)
+	public async Task<bool> StoreGuildAsync(DGuild guild, string serverId)
 	{
 		long registryKey = await TotalGuild() + 1;
 
 		if (registryKey == -1)
 			return false;
 
+		if (await GuildExists(guild) || guild.GuildId != serverId)
+			return false;
+
 		using var conn = new NpgsqlConnection(_connectionString);
 		await conn.OpenAsync();
 
 		string? query = $"INSERT INTO {_tableNameAbsolute} VALUES({registryKey}, '{guild.GuildId}', '{guild.ServerName}', NULL);";
+
+		using var cmd = new NpgsqlCommand(query, conn);
+		await cmd.ExecuteNonQueryAsync();
+		return true;
+	}
+
+	public async Task<bool> RemoveGuildAsync(DGuild guild, string serverId)
+	{
+		using var conn = new NpgsqlConnection(_connectionString);
+		await conn.OpenAsync();
+
+		if (!await GuildExists(guild) || guild.GuildId != serverId)
+			return false;
+
+		string? query = $"DELETE FROM {_tableNameAbsolute} WHERE guild_id='{guild.GuildId}'";
 
 		using var cmd = new NpgsqlCommand(query, conn);
 		await cmd.ExecuteNonQueryAsync();
@@ -68,13 +87,13 @@ public class DatabaseEngine
 		return str != null;
 	}
 
-	public async Task<bool> RegisterChannelsAsync(DGuild guild, string channelId)
+	public async Task<bool> RegisterChannelsByGuildAsync(DGuild guild, string channelId)
 	{
 		using var conn = new NpgsqlConnection(_connectionString);
 		await conn.OpenAsync();
 
 		if (!await GuildExists(guild))
-			await StoreGuild(guild);
+			await StoreGuildAsync(guild, guild.GuildId!);
 
 		string query = $"UPDATE {_tableNameAbsolute} SET channels=ARRAY_APPEND(channels, \'{channelId}\') WHERE guild_id=\'{guild.GuildId!}\'";
 
@@ -82,7 +101,7 @@ public class DatabaseEngine
 		return await cmd.ExecuteNonQueryAsync() <= 0 ? false : true;
 	}
 
-	public async Task<bool> DeregisterChannelsAsync(DGuild guild, string channelId)
+	public async Task<bool> DeregisterChannelsByGuildAsync(DGuild guild, string channelId)
 	{
 		using var conn = new NpgsqlConnection(_connectionString);
 		await conn.OpenAsync();
